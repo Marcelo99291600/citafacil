@@ -1,9 +1,9 @@
-const { createClient } = require('@supabase/supabase-js')
-const { generarSal, hashearPin, pinValido } = require('./_lib/pinHash')
+import { createClient } from '@supabase/supabase-js'
+import { generarSal, hashearPin, pinValido } from './_lib/pinHash.js'
 
 const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' })
 
   const { token, pin } = req.body
@@ -15,7 +15,6 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Sesión inválida.' })
   }
 
-  // Verifica que el token pertenezca a una sesión real de Supabase antes de tocar nada.
   const { data: usuario, error: errorUsuario } = await supabaseAdmin.auth.getUser(token)
   if (errorUsuario || !usuario?.user) {
     return res.status(401).json({ error: 'Sesión inválida.' })

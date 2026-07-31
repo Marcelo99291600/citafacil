@@ -1,9 +1,9 @@
-const { createClient } = require('@supabase/supabase-js')
-const { hashearPin, pinValido, compararHashes } = require('./_lib/pinHash')
+import { createClient } from '@supabase/supabase-js'
+import { hashearPin, pinValido, compararHashes } from './_lib/pinHash.js'
 
 const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' })
 
   const { token, pin } = req.body

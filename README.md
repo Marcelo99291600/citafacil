@@ -171,10 +171,67 @@ Desde `/panel/apariencia`, el doctor sube 3 imágenes (arrastrando o eligiendo e
 También puede cambiar su color de acento desde la misma pantalla, con vista previa en vivo de
 cómo se ve todo junto antes de publicarlo.
 
+Desde la misma pantalla (`/panel/apariencia`), el doctor también escribe una **descripción**
+(hasta 400 caracteres) que se muestra en su página de reservas, debajo de su nombre — es el
+espacio para que el paciente sepa quién es, su experiencia o su enfoque antes de agendar.
+
+## Fotos referenciales por tratamiento
+
+Desde `/panel/servicios`, cada servicio tiene su propia galería (hasta 6 fotos) — útil para que
+el paciente vea, por ejemplo, cómo se ve un tratamiento de blanqueamiento o el consultorio
+mismo antes de agendar. Las fotos se suben directo desde la tarjeta del servicio, sin necesidad
+de entrar a modo edición.
+
+En la página pública, la primera foto aparece como miniatura junto al servicio en la lista, y
+la galería completa se muestra al elegir el horario — justo antes de que el paciente decida,
+que es cuando más ayuda a generar confianza.
+
 Las imágenes se guardan en un bucket **público** de Supabase Storage llamado `marca` (distinto
 del bucket privado `adjuntos` de archivos de pacientes) — público porque su propósito es
 mostrarse en la página de reservas, no proteger información sensible. Aun así, solo el propio
 consultorio puede subir o reemplazar sus imágenes; cualquiera puede verlas.
+
+## PIN de acceso al panel de administrador
+
+Además de requerir login (correo/contraseña) y estar en la tabla `administradores`, entrar a
+`/admin` pide un **PIN de 4 a 6 dígitos** como segunda capa de seguridad — útil sobre todo si
+alguien más usa tu computadora con tu sesión abierta.
+
+- La primera vez que entras, te pide **configurarlo**
+- Las siguientes veces, te lo pide **una vez por sesión de navegador** (se recuerda mientras no
+  cierres esa pestaña/navegador, usando `sessionStorage` — no `localStorage`, para que no quede
+  guardado permanentemente en el dispositivo)
+- El PIN se guarda **hasheado** (`scrypt`, con sal aleatoria) en la base de datos — ni siquiera
+  tú puedes verlo de nuevo en Supabase, solo se puede verificar o reemplazar
+- La verificación ocurre en el servidor (`/api/pin-verificar`), nunca en el navegador — así que
+  no hay forma de "leer" el PIN correcto inspeccionando el código de la página
+
+**Importante — esto NO reemplaza la seguridad real:** la protección de fondo sigue siendo que
+las políticas de base de datos (RLS) bloquean el acceso a los datos si no eres administrador,
+sin importar el PIN. El PIN es una fricción adicional para tu propio dispositivo, no la razón
+por la que otros consultorios no pueden ver tus datos.
+
+## ⚠️ Importante: probar las funciones /api en local
+
+`npm run dev` (Vite) **no ejecuta las funciones serverless** de la carpeta `/api` — ni
+`api/reservar.js`, ni `api/pin-configurar.js`, ni `api/pin-verificar.js`. Si las pruebas así,
+verás errores 404 al llamar a esos endpoints (por ejemplo, al intentar pagar una cita, o al
+configurar el PIN de administrador).
+
+Para probarlas en local, necesitas la CLI de Vercel:
+
+```bash
+npm install -g vercel
+vercel login
+vercel link          # conecta esta carpeta a tu proyecto de Vercel
+vercel env pull       # baja tus variables de entorno reales desde Vercel
+vercel dev            # levanta todo (frontend + funciones /api) en un solo servidor
+```
+
+`vercel dev` reemplaza a `npm run dev` para pruebas completas — usa el mismo puerto por
+defecto (`localhost:3000`, puede variar). Si solo estás revisando pantallas que no dependen de
+`/api` (como `/panel/servicios` o `/panel/disponibilidad`), `npm run dev` sigue sirviendo para
+ir más rápido; pero para probar pagos o el PIN de administrador, usa `vercel dev`.
 
 ## Qué falta para producción (roadmap corto)
 

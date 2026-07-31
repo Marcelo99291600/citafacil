@@ -101,6 +101,15 @@ export default function DashboardPage() {
             >
               Cuenta de cobro
             </Link>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut()
+                navigate('/login')
+              }}
+              className="text-sm text-tinta/40 hover:text-red-600 px-2 transition-colors"
+            >
+              Salir
+            </button>
           </div>
         </div>
 

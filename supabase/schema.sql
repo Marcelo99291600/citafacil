@@ -18,6 +18,7 @@ create table consultorios (
   comision_porcentaje numeric default 12, -- % que cobras tú
   culqi_public_key text,                  -- llave pública de Culqi del PROPIO consultorio
   culqi_secret_key text,                  -- llave secreta de Culqi del PROPIO consultorio (solo la usa el servidor)
+  descripcion text,                       -- presentación del doctor/consultorio para el paciente
   created_at timestamptz default now()
 );
 
@@ -29,6 +30,7 @@ create table servicios (
   duracion_min int not null default 30,
   precio numeric not null,
   activo boolean default true,
+  imagenes text[] not null default '{}', -- fotos referenciales del tratamiento
   created_at timestamptz default now()
 );
 
@@ -100,6 +102,9 @@ create table administradores (
   id uuid primary key default uuid_generate_v4(),
   auth_user_id uuid references auth.users(id) not null unique,
   nombre text not null,
+  pin_hash text,                          -- hash del PIN, nunca se guarda en texto plano
+  pin_salt text,
+  pin_configurado boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -169,7 +174,8 @@ select
   telefono_whatsapp,
   culqi_public_key,
   imagen_portada,
-  imagen_fondo
+  imagen_fondo,
+  descripcion
 from consultorios;
 
 grant select on consultorios_publicos to anon, authenticated;
@@ -331,6 +337,8 @@ create policy "admin ve todos los consultorios" on consultorios for select
 create policy "admin ve todas las citas" on citas for select
   using (exists (select 1 from administradores where auth_user_id = auth.uid()));
 create policy "admin ve todos los pagos" on pagos for select
+  using (exists (select 1 from administradores where auth_user_id = auth.uid()));
+create policy "admin ve todos los servicios" on servicios for select
   using (exists (select 1 from administradores where auth_user_id = auth.uid()));
 create policy "admin gestiona liquidaciones" on liquidaciones for all
   using (exists (select 1 from administradores where auth_user_id = auth.uid()));
